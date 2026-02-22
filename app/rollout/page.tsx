@@ -97,8 +97,26 @@ export default function RolloutPage() {
           </p>
         </div>
 
+        {/* 기록 버튼 */}
+        <div className="mx-4 -mt-5 mb-4 grid grid-cols-2 gap-2">
+          <Link
+            href="/rollout/record"
+            className="flex items-center justify-center gap-1.5 py-3.5 rounded-2xl text-white font-bold text-sm shadow-lg"
+            style={{ background: "linear-gradient(135deg, #14b8a6, #2563eb)" }}
+          >
+            ✏️ 오늘 기록
+          </Link>
+          <Link
+            href="/rollout/history"
+            className="flex items-center justify-center gap-1.5 py-3.5 rounded-2xl font-bold text-sm"
+            style={{ background: "#1f2937", color: "#9ca3af" }}
+          >
+            📊 기록 보기
+          </Link>
+        </div>
+
         {/* Intro card */}
-        <div className="mx-4 -mt-5 bg-white rounded-2xl shadow-xl p-5 mb-5">
+        <div className="mx-4 bg-white rounded-2xl shadow-xl p-5 mb-5">
           <h2 className="font-black text-gray-800 mb-2">📋 프로그램 소개</h2>
           <p className="text-gray-600 text-sm leading-relaxed">
             롤아웃(AB슬라이드) 동작으로 4주 만에 뱃살을 빼고 복근을 만드는

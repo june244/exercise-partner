@@ -120,8 +120,26 @@ export default function PushupPage() {
           </p>
         </div>
 
+        {/* 기록 버튼 */}
+        <div className="mx-4 -mt-5 mb-4 grid grid-cols-2 gap-2">
+          <Link
+            href="/pushup/record"
+            className="flex items-center justify-center gap-1.5 py-3.5 rounded-2xl text-white font-bold text-sm shadow-lg"
+            style={{ background: "linear-gradient(135deg, #f97316, #dc2626)" }}
+          >
+            ✏️ 오늘 기록
+          </Link>
+          <Link
+            href="/pushup/history"
+            className="flex items-center justify-center gap-1.5 py-3.5 rounded-2xl font-bold text-sm"
+            style={{ background: "#1f2937", color: "#9ca3af" }}
+          >
+            📊 기록 보기
+          </Link>
+        </div>
+
         {/* Start guide card */}
-        <div className="mx-4 -mt-5 bg-white rounded-2xl shadow-xl p-5 mb-5">
+        <div className="mx-4 bg-white rounded-2xl shadow-xl p-5 mb-5">
           <h2 className="font-black text-gray-800 mb-1">📋 시작 전 테스트</h2>
           <p className="text-gray-500 text-xs mb-4">
             정자세 연속 횟수로 시작 주차를 결정하세요
