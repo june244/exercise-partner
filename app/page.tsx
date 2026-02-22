@@ -1,65 +1,76 @@
-import Image from "next/image";
+import Link from "next/link";
+
+const projects = [
+  {
+    href: "/pushup",
+    emoji: "💪",
+    title: "푸쉬업 100개",
+    subtitle: "6주 완성 프로그램",
+    tags: ["주 3일", "6주", "맨몸운동"],
+    from: "#f97316",
+    to: "#dc2626",
+    textColor: "#fed7aa",
+  },
+  {
+    href: "/rollout",
+    emoji: "🔥",
+    title: "AB슬라이드 복근",
+    subtitle: "4주 완성 프로그램",
+    tags: ["4주", "뱃살 감소", "복근 형성"],
+    from: "#14b8a6",
+    to: "#2563eb",
+    textColor: "#99f6e4",
+  },
+];
 
 export default function Home() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
+    <main className="min-h-screen bg-gray-950 flex flex-col items-center justify-center px-5 py-16">
+      <div className="w-full max-w-sm">
+        <div className="text-center mb-10">
+          <p className="text-4xl mb-3">🏃</p>
+          <h1 className="text-white text-3xl font-black tracking-tight mb-2">
+            운동 루틴
           </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+          <p className="text-gray-500 text-sm">프로젝트를 선택하세요</p>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+
+        <div className="flex flex-col gap-4">
+          {projects.map((p) => (
+            <Link key={p.href} href={p.href}>
+              <div
+                className="rounded-3xl p-6 shadow-2xl active:scale-95 transition-transform duration-150 cursor-pointer"
+                style={{
+                  background: `linear-gradient(135deg, ${p.from}, ${p.to})`,
+                }}
+              >
+                <div className="text-5xl mb-4">{p.emoji}</div>
+                <h2 className="text-white text-2xl font-black mb-1">
+                  {p.title}
+                </h2>
+                <p className="text-sm mb-5" style={{ color: p.textColor }}>
+                  {p.subtitle}
+                </p>
+                <div className="flex gap-2 flex-wrap">
+                  {p.tags.map((tag) => (
+                    <span
+                      key={tag}
+                      className="text-white text-xs font-semibold px-3 py-1.5 rounded-full"
+                      style={{ background: "rgba(255,255,255,0.2)" }}
+                    >
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </Link>
+          ))}
         </div>
-      </main>
-    </div>
+
+        <p className="text-gray-700 text-xs text-center mt-10">
+          출처: 보통사람 운동채널 (ordinaryfit)
+        </p>
+      </div>
+    </main>
   );
 }
