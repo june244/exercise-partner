@@ -1,103 +1,129 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
+import { pushupProgram, type PushupDay } from "@/lib/pushup-program";
+import {
+  getPushupProgress,
+  savePushupProgress,
+  type PushupProgress,
+} from "@/lib/records";
 
 const startGuide = [
   { range: "5회 이하", start: "1주차 시작" },
   { range: "6 ~ 10회", start: "1주차 시작" },
   { range: "11 ~ 20회", start: "1주차 시작" },
-  { range: "20회 이상", start: "3주차 시작 ✅" },
+  { range: "20회 이상", start: "3주차 시작" },
 ];
 
-type Day = { label: string; sets: number; rest: string };
+function DayTable({ day, weekIdx }: { day: PushupDay; weekIdx: number }) {
+  const totalSets = day.sets[0].length;
+  const isLastSetPlus = true; // 마지막 세트는 항상 n+ (이상)
 
-type Week = {
-  week: number;
-  badge: string;
-  badgeColor: string;
-  target: string | null;
-  description: string;
-  days: Day[] | null;
-  milestone: string | null;
-  tip: string | null;
-};
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center justify-between">
+        <span className="text-gray-800 font-black text-sm">{day.day}일차</span>
+        <span className="text-gray-400 text-xs">휴식 {day.rest}</span>
+      </div>
+      <div className="overflow-x-auto -mx-1">
+        <table className="w-full text-xs">
+          <thead>
+            <tr>
+              <th className="text-left text-gray-400 font-semibold py-1.5 px-1 w-14">
+                세트
+              </th>
+              {day.levels.map((level) => (
+                <th
+                  key={level}
+                  className="text-center font-bold py-1.5 px-1"
+                  style={{
+                    color:
+                      weekIdx < 2
+                        ? ["#ef4444", "#f59e0b", "#22c55e"][
+                            day.levels.indexOf(level)
+                          ]
+                        : ["#f59e0b", "#3b82f6", "#8b5cf6"][
+                            day.levels.indexOf(level)
+                          ],
+                  }}
+                >
+                  {level}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {Array.from({ length: totalSets }, (_, setIdx) => (
+              <tr
+                key={setIdx}
+                className={
+                  setIdx % 2 === 0 ? "bg-gray-50" : ""
+                }
+              >
+                <td className="text-gray-500 font-semibold py-1.5 px-1">
+                  {setIdx + 1}세트
+                </td>
+                {day.levels.map((level, levelIdx) => (
+                  <td
+                    key={level}
+                    className="text-center text-gray-700 font-bold py-1.5 px-1"
+                  >
+                    {day.sets[levelIdx][setIdx]}
+                    {isLastSetPlus && setIdx === totalSets - 1 ? "+" : ""}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
 
-const weeks: Week[] = [
-  {
-    week: 1,
-    badge: "적응기",
-    badgeColor: "#fb923c",
-    target: "연속 20회 미만 대상",
-    description:
-      "푸쉬업 동작에 익숙해지는 단계. 올바른 정자세를 완성하는 것이 이 주차의 핵심 목표입니다.",
-    days: null,
-    milestone: null,
-    tip: "20개 이상 가능하다면 3주차로 바로 건너뛰세요!",
-  },
-  {
-    week: 2,
-    badge: "성장기",
-    badgeColor: "#f59e0b",
-    target: null,
-    description:
-      "1주차에서 익숙해진 동작을 바탕으로 횟수를 점진적으로 늘려나가는 기간. 세트 간 충분한 휴식을 두면 누구나 어렵지 않게 진행 가능합니다.",
-    days: null,
-    milestone: null,
-    tip: null,
-  },
-  {
-    week: 3,
-    badge: "강화 시작",
-    badgeColor: "#84cc16",
-    target: "정자세 20회 이상이면 여기서 시작",
-    description:
-      "이미 푸쉬업에 익숙한 상태를 가정. 처음 해보면 제법 빡센 느낌이 드는 구간. 이 시점부터 손목 피로가 쌓이기 쉽습니다.",
-    days: null,
-    milestone: null,
-    tip: "3주차부터 손목에 피로/염증이 오기 쉬움. 푸쉬업바 사용을 강력 권장!",
-  },
-  {
-    week: 4,
-    badge: "고반복",
-    badgeColor: "#22c55e",
-    target: null,
-    description:
-      "3주차와 세트수는 동일하지만 횟수를 더 늘려 고반복에 익숙해지는 구간. 한 번에 40개가 가능한 몸을 만드는 기간.",
-    days: null,
-    milestone: "4주차 완료 → 연속 약 40개 가능",
-    tip: null,
-  },
-  {
-    week: 5,
-    badge: "폭발 성장",
-    badgeColor: "#3b82f6",
-    target: null,
-    description:
-      "힘과 근육량을 폭발적으로 성장시키는 본격 구간. 운동 볼륨이 대폭 늘어나고 쉬는 시간은 줄어드는 가장 빡센 주차.",
-    days: [
-      { label: "1일차", sets: 5, rest: "60초" },
-      { label: "2일차", sets: 8, rest: "45초" },
-      { label: "3일차", sets: 8, rest: "45초" },
-    ],
-    milestone: "5주차 완료 → 연속 50개 이상 가능",
-    tip: "상당히 빡세지만 이 구간을 버텨야 각이 잡힙니다 🔥",
-  },
-  {
-    week: 6,
-    badge: "마무리 & 도전",
-    badgeColor: "#a855f7",
-    target: null,
-    description:
-      "2·3일차는 초반 세트 횟수를 줄이고 마지막 세트에 몰빵하는 전략. 100개 연속을 위한 '워밍업 → 전력 투구' 패턴 훈련.",
-    days: null,
-    milestone: "6주차 완료 → 연속 60~70개 이상 가능",
-    tip: "마지막 세트에 모든 걸 쏟아붓는 연습! 실패해도 괜찮아요, 몸은 이미 성장했습니다.",
-  },
-];
+function getLevelsForWeek(week: number): string[] {
+  const w = pushupProgram.find((p) => p.week === week);
+  return w ? w.days[0].levels : [];
+}
 
 export default function PushupPage() {
   const [openWeek, setOpenWeek] = useState<number | null>(null);
+  const [progress, setProgress] = useState<PushupProgress | null>(null);
+  const [editing, setEditing] = useState(false);
+  const [editWeek, setEditWeek] = useState(1);
+  const [editDay, setEditDay] = useState(1);
+  const [editLevel, setEditLevel] = useState("");
+
+  useEffect(() => {
+    const saved = getPushupProgress();
+    if (saved) {
+      setProgress(saved);
+      setOpenWeek(saved.week);
+    }
+  }, []);
+
+  function startEdit() {
+    if (progress) {
+      setEditWeek(progress.week);
+      setEditDay(progress.day);
+      setEditLevel(progress.level);
+    } else {
+      setEditWeek(1);
+      setEditDay(1);
+      const levels = getLevelsForWeek(1);
+      setEditLevel(levels[0] || "");
+    }
+    setEditing(true);
+  }
+
+  function saveProgress() {
+    const p: PushupProgress = { week: editWeek, day: editDay, level: editLevel };
+    savePushupProgress(p);
+    setProgress(p);
+    setOpenWeek(p.week);
+    setEditing(false);
+  }
 
   return (
     <main className="min-h-screen bg-gray-950 pb-10">
@@ -138,6 +164,124 @@ export default function PushupPage() {
           </Link>
         </div>
 
+        {/* 진행 상황 카드 */}
+        <div className="mx-4 bg-white rounded-2xl shadow-xl p-5 mb-4">
+          <h2 className="font-black text-gray-800 mb-3 text-sm">📍 현재 진행 상황</h2>
+          {editing ? (
+            <div className="space-y-4">
+              {/* 주차 스테퍼 */}
+              <div>
+                <p className="text-gray-400 text-xs font-semibold mb-2">주차</p>
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={() => {
+                      const nw = Math.max(1, editWeek - 1);
+                      setEditWeek(nw);
+                      const levels = getLevelsForWeek(nw);
+                      if (!levels.includes(editLevel)) setEditLevel(levels[0] || "");
+                    }}
+                    className="w-9 h-9 rounded-full font-black text-lg flex items-center justify-center bg-gray-100 text-gray-600"
+                  >
+                    −
+                  </button>
+                  <span className="text-xl font-black text-gray-800">{editWeek}주차</span>
+                  <button
+                    onClick={() => {
+                      const nw = Math.min(6, editWeek + 1);
+                      setEditWeek(nw);
+                      const levels = getLevelsForWeek(nw);
+                      if (!levels.includes(editLevel)) setEditLevel(levels[0] || "");
+                    }}
+                    className="w-9 h-9 rounded-full font-black text-lg flex items-center justify-center"
+                    style={{ background: "#fff7ed", color: "#f97316" }}
+                  >
+                    +
+                  </button>
+                </div>
+              </div>
+              {/* 일차 스테퍼 */}
+              <div>
+                <p className="text-gray-400 text-xs font-semibold mb-2">일차</p>
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={() => setEditDay((d) => Math.max(1, d - 1))}
+                    className="w-9 h-9 rounded-full font-black text-lg flex items-center justify-center bg-gray-100 text-gray-600"
+                  >
+                    −
+                  </button>
+                  <span className="text-xl font-black text-gray-800">{editDay}일차</span>
+                  <button
+                    onClick={() => setEditDay((d) => Math.min(3, d + 1))}
+                    className="w-9 h-9 rounded-full font-black text-lg flex items-center justify-center"
+                    style={{ background: "#fff7ed", color: "#f97316" }}
+                  >
+                    +
+                  </button>
+                </div>
+              </div>
+              {/* 레벨 칩 */}
+              <div>
+                <p className="text-gray-400 text-xs font-semibold mb-2">레벨</p>
+                <div className="flex flex-wrap gap-2">
+                  {getLevelsForWeek(editWeek).map((lv) => (
+                    <button
+                      key={lv}
+                      onClick={() => setEditLevel(lv)}
+                      className="px-3 py-1.5 rounded-full text-xs font-bold border transition-colors"
+                      style={
+                        editLevel === lv
+                          ? { background: "#f97316", color: "#fff", borderColor: "#f97316" }
+                          : { background: "#fff", color: "#6b7280", borderColor: "#e5e7eb" }
+                      }
+                    >
+                      {lv}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="flex gap-2 pt-1">
+                <button
+                  onClick={() => setEditing(false)}
+                  className="flex-1 py-2.5 rounded-xl text-sm font-bold text-gray-500 bg-gray-100"
+                >
+                  취소
+                </button>
+                <button
+                  onClick={saveProgress}
+                  className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white"
+                  style={{ background: "#f97316" }}
+                >
+                  저장
+                </button>
+              </div>
+            </div>
+          ) : progress ? (
+            <div className="flex items-center justify-between">
+              <p className="text-gray-700 font-bold text-sm">
+                {progress.week}주차 · {progress.day}일차 · {progress.level}
+              </p>
+              <button
+                onClick={startEdit}
+                className="text-xs font-bold px-3 py-1.5 rounded-lg"
+                style={{ background: "#fff7ed", color: "#f97316" }}
+              >
+                변경
+              </button>
+            </div>
+          ) : (
+            <div className="flex items-center justify-between">
+              <p className="text-gray-400 text-sm">현재 진행 주차를 설정하세요</p>
+              <button
+                onClick={startEdit}
+                className="text-xs font-bold text-white px-3 py-1.5 rounded-lg"
+                style={{ background: "#f97316" }}
+              >
+                설정
+              </button>
+            </div>
+          )}
+        </div>
+
         {/* Start guide card */}
         <div className="mx-4 bg-white rounded-2xl shadow-xl p-5 mb-5">
           <h2 className="font-black text-gray-800 mb-1">📋 시작 전 테스트</h2>
@@ -164,7 +308,7 @@ export default function PushupPage() {
 
         {/* Week accordion */}
         <div className="px-4 space-y-3">
-          {weeks.map((w) => {
+          {pushupProgram.map((w, weekIdx) => {
             const isOpen = openWeek === w.week;
             return (
               <div
@@ -186,7 +330,10 @@ export default function PushupPage() {
                       <div className="font-black text-gray-800">
                         {w.week}주차
                       </div>
-                      <div className="text-xs font-semibold" style={{ color: w.badgeColor }}>
+                      <div
+                        className="text-xs font-semibold"
+                        style={{ color: w.badgeColor }}
+                      >
                         {w.badge}
                       </div>
                     </div>
@@ -207,41 +354,17 @@ export default function PushupPage() {
                       {w.description}
                     </p>
 
-                    {/* Days table (week 5 only has data) */}
-                    {w.days ? (
-                      <div>
-                        <div className="text-xs text-gray-400 font-semibold uppercase tracking-wide mb-2">
-                          세트 구성
+                    {/* Day tables */}
+                    <div className="space-y-4">
+                      {w.days.map((day) => (
+                        <div
+                          key={day.day}
+                          className="bg-gray-50 rounded-xl p-3"
+                        >
+                          <DayTable day={day} weekIdx={weekIdx} />
                         </div>
-                        <div className="space-y-2">
-                          {w.days.map((d) => (
-                            <div
-                              key={d.label}
-                              className="flex justify-between items-center bg-orange-50 rounded-xl px-4 py-3"
-                            >
-                              <span className="text-gray-700 font-semibold text-sm">
-                                {d.label}
-                              </span>
-                              <div className="flex gap-3 text-sm">
-                                <span className="text-orange-600 font-black">
-                                  {d.sets}세트
-                                </span>
-                                <span className="text-gray-400">
-                                  휴식 {d.rest}
-                                </span>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                        <p className="text-gray-400 text-xs mt-2 text-center">
-                          세트당 횟수는 원본 루틴표 이미지 참고
-                        </p>
-                      </div>
-                    ) : (
-                      <div className="bg-gray-50 rounded-xl px-4 py-3 text-xs text-gray-400 text-center">
-                        📸 세부 세트/횟수 → 원본 루틴표 이미지 참고
-                      </div>
-                    )}
+                      ))}
+                    </div>
 
                     {w.milestone && (
                       <div className="bg-green-50 text-green-700 text-xs rounded-xl px-4 py-3 font-semibold">

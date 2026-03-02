@@ -8,10 +8,24 @@ export type WorkoutRecord = {
   date: string; // "YYYY-MM-DD"
   sets: SetRecord[];
   maxConsecutive?: number; // 푸쉬업 전용
+  memo?: string;
+};
+
+export type PushupProgress = {
+  week: number; // 1-6
+  day: number; // 1-3
+  level: string; // e.g. "<5", "6-10", "11-20"
+};
+
+export type RolloutProgress = {
+  week: number; // 1-4
+  day: string; // "월"~"토"
 };
 
 const PUSHUP_KEY = "exercise-pushup-records";
 const ROLLOUT_KEY = "exercise-rollout-records";
+const PUSHUP_PROGRESS_KEY = "exercise-pushup-progress";
+const ROLLOUT_PROGRESS_KEY = "exercise-rollout-progress";
 
 function load(key: string): WorkoutRecord[] {
   if (typeof window === "undefined") return [];
@@ -87,4 +101,58 @@ export function formatTimerDisplay(seconds: number): string {
   const m = Math.floor(seconds / 60);
   const s = seconds % 60;
   return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+}
+
+// ── 진행 상황 ──────────────────────────────────
+export function getPushupProgress(): PushupProgress | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = localStorage.getItem(PUSHUP_PROGRESS_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
+export function savePushupProgress(progress: PushupProgress): void {
+  localStorage.setItem(PUSHUP_PROGRESS_KEY, JSON.stringify(progress));
+}
+
+export function getRolloutProgress(): RolloutProgress | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = localStorage.getItem(ROLLOUT_PROGRESS_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
+export function saveRolloutProgress(progress: RolloutProgress): void {
+  localStorage.setItem(ROLLOUT_PROGRESS_KEY, JSON.stringify(progress));
+}
+
+export function advancePushupProgress(): void {
+  const p = getPushupProgress();
+  if (!p) return;
+  if (p.day < 3) {
+    savePushupProgress({ ...p, day: p.day + 1 });
+  } else if (p.week < 6) {
+    savePushupProgress({ ...p, week: p.week + 1, day: 1 });
+  }
+  // week 6 day 3 → 완료 상태, 변경 없음
+}
+
+const ROLLOUT_DAYS = ["월", "화", "수", "목", "금", "토"];
+
+export function advanceRolloutProgress(): void {
+  const p = getRolloutProgress();
+  if (!p) return;
+  const idx = ROLLOUT_DAYS.indexOf(p.day);
+  if (idx < ROLLOUT_DAYS.length - 1) {
+    saveRolloutProgress({ ...p, day: ROLLOUT_DAYS[idx + 1] });
+  } else if (p.week < 4) {
+    saveRolloutProgress({ week: p.week + 1, day: "월" });
+  }
+  // week 4 토 → 완료 상태, 변경 없음
 }

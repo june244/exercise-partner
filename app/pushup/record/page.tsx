@@ -6,9 +6,13 @@ import Link from "next/link";
 import {
   today,
   savePushupRecord,
+  getPushupProgress,
+  advancePushupProgress,
   formatTimerDisplay,
   type SetRecord,
+  type PushupProgress,
 } from "@/lib/records";
+import { pushupProgram } from "@/lib/pushup-program";
 
 const ACCENT = "#f97316";
 const ACCENT_BG = "#fff7ed";
@@ -56,8 +60,29 @@ export default function PushupRecordPage() {
   const [date, setDate] = useState(today());
   const [maxConsecutive, setMaxConsecutive] = useState(0);
   const [sets, setSets] = useState<SetRecord[]>([{ reps: 10, restSeconds: 60 }]);
+  const [memo, setMemo] = useState("");
+  const [progress, setProgress] = useState<PushupProgress | null>(null);
   const [activeTimer, setActiveTimer] = useState<number | null>(null);
   const [timerSeconds, setTimerSeconds] = useState(0);
+
+  useEffect(() => {
+    const p = getPushupProgress();
+    setProgress(p);
+    if (p) {
+      const week = pushupProgram.find((w) => w.week === p.week);
+      if (week) {
+        const day = week.days[p.day - 1];
+        if (day) {
+          const levelIdx = day.levels.indexOf(p.level);
+          if (levelIdx >= 0) {
+            const repsArr = day.sets[levelIdx];
+            const restSec = parseInt(day.rest) || 60;
+            setSets(repsArr.map((r) => ({ reps: r, restSeconds: restSec })));
+          }
+        }
+      }
+    }
+  }, []);
 
   // 타이머 틱
   useEffect(() => {
@@ -116,8 +141,10 @@ export default function PushupRecordPage() {
       date,
       sets,
       maxConsecutive: maxConsecutive > 0 ? maxConsecutive : undefined,
+      memo: memo.trim() || undefined,
     };
     savePushupRecord(record);
+    advancePushupProgress();
     router.push("/pushup/history");
   }
 
@@ -138,6 +165,13 @@ export default function PushupRecordPage() {
           <div className="text-4xl mb-3">📝</div>
           <h1 className="text-white text-2xl font-black">기록 입력</h1>
           <p className="text-orange-200 text-sm">푸쉬업 100개 프로젝트</p>
+          {progress && (
+            <div className="mt-3 inline-block bg-white/20 backdrop-blur-sm rounded-xl px-3 py-1.5">
+              <span className="text-white text-sm font-bold">
+                {progress.week}주차 · {progress.day}일차 · {progress.level}
+              </span>
+            </div>
+          )}
         </div>
 
         <div className="px-4 pt-4 space-y-3">
@@ -261,6 +295,20 @@ export default function PushupRecordPage() {
           >
             + 세트 추가
           </button>
+
+          {/* 메모 */}
+          <div className="bg-white rounded-2xl p-5">
+            <p className="text-gray-400 text-xs font-semibold uppercase tracking-wide mb-3">
+              메모
+            </p>
+            <textarea
+              value={memo}
+              onChange={(e) => setMemo(e.target.value)}
+              placeholder="오늘 운동은 어땠나요? (선택사항)"
+              rows={3}
+              className="w-full text-gray-800 text-sm outline-none resize-none leading-relaxed"
+            />
+          </div>
 
           {/* 저장 */}
           <button

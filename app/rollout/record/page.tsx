@@ -6,9 +6,13 @@ import Link from "next/link";
 import {
   today,
   saveRolloutRecord,
+  getRolloutProgress,
+  advanceRolloutProgress,
   formatTimerDisplay,
   type SetRecord,
+  type RolloutProgress,
 } from "@/lib/records";
+import { rolloutProgram } from "@/lib/rollout-program";
 
 const ACCENT = "#14b8a6";
 const ACCENT_BG = "#f0fdfa";
@@ -52,7 +56,31 @@ export default function RolloutRecordPage() {
   const router = useRouter();
   const [date, setDate] = useState(today());
   const [sets, setSets] = useState<SetRecord[]>([{ reps: 10, restSeconds: 60 }]);
+  const [memo, setMemo] = useState("");
+  const [progress, setProgress] = useState<RolloutProgress | null>(null);
   const [activeTimer, setActiveTimer] = useState<number | null>(null);
+
+  useEffect(() => {
+    const p = getRolloutProgress();
+    setProgress(p);
+    if (p) {
+      // week 4 uses week 3 (본 세트) data
+      const weekData = p.week <= 3
+        ? rolloutProgram.find((w) => w.week === p.week)
+        : rolloutProgram.find((w) => w.week === 3);
+      if (weekData) {
+        const dayData = weekData.days.find((d) => d.day === p.day);
+        if (dayData) {
+          setSets(
+            Array.from({ length: dayData.sets }, () => ({
+              reps: dayData.reps,
+              restSeconds: dayData.restSeconds,
+            }))
+          );
+        }
+      }
+    }
+  }, []);
   const [timerSeconds, setTimerSeconds] = useState(0);
 
   useEffect(() => {
@@ -110,7 +138,9 @@ export default function RolloutRecordPage() {
       id: Date.now().toString(),
       date,
       sets,
+      memo: memo.trim() || undefined,
     });
+    advanceRolloutProgress();
     router.push("/rollout/history");
   }
 
@@ -131,6 +161,13 @@ export default function RolloutRecordPage() {
           <div className="text-4xl mb-3">📝</div>
           <h1 className="text-white text-2xl font-black">기록 입력</h1>
           <p className="text-teal-200 text-sm">AB슬라이드 복근 프로젝트</p>
+          {progress && (
+            <div className="mt-3 inline-block bg-white/20 backdrop-blur-sm rounded-xl px-3 py-1.5">
+              <span className="text-white text-sm font-bold">
+                {progress.week}주차 · {progress.day}요일
+              </span>
+            </div>
+          )}
         </div>
 
         <div className="px-4 pt-4 space-y-3">
@@ -232,6 +269,20 @@ export default function RolloutRecordPage() {
           >
             + 세트 추가
           </button>
+
+          {/* 메모 */}
+          <div className="bg-white rounded-2xl p-5">
+            <p className="text-gray-400 text-xs font-semibold uppercase tracking-wide mb-3">
+              메모
+            </p>
+            <textarea
+              value={memo}
+              onChange={(e) => setMemo(e.target.value)}
+              placeholder="오늘 운동은 어땠나요? (선택사항)"
+              rows={3}
+              className="w-full text-gray-800 text-sm outline-none resize-none leading-relaxed"
+            />
+          </div>
 
           <button
             onClick={handleSave}

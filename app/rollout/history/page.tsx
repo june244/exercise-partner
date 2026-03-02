@@ -149,6 +149,15 @@ export default function RolloutHistoryPage() {
                           </tbody>
                         </table>
 
+                        {record.memo && (
+                          <div className="mt-3 bg-gray-50 rounded-xl px-4 py-3">
+                            <p className="text-gray-400 text-xs font-semibold mb-1">메모</p>
+                            <p className="text-gray-600 text-sm leading-relaxed whitespace-pre-wrap">
+                              {record.memo}
+                            </p>
+                          </div>
+                        )}
+
                         <button
                           onClick={() => handleDelete(record.id)}
                           className="mt-4 text-xs text-red-400 font-semibold px-3 py-1.5 rounded-lg"
